@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cat Clicker 🐱</title>
+
+  <!-- Req 7.1: Load Quicksand from Google Fonts with sans-serif fallback -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Req 9.2: Tailwind CSS v3 via CDN — no local install or build step required -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Req 7.2, 9.4: Inline critical fallback styles
+       These duplicate all layout-critical rules so the app stays functional
+       when the Tailwind CDN or Google Fonts CDN is unavailable. -->
+  <style>
+    /* Req 7.2: Default font family applied to body/root with system fallback */
+    :root {
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      /* Req 5.1, 5.2, 5.3 — Task 2.1: Full-viewport pastel gradient background
+         Uses four soft pastel color stops: pink → lavender → peach → mint
+         min-height: 100vh ensures the gradient covers the full viewport height.
+         overflow-x: hidden prevents any horizontal scrollbar from the gradient. */
+      background: linear-gradient(135deg, #fce4ec 0%, #ede7f6 40%, #fff3e0 70%, #e8f5e9 100%);
+      min-height: 100vh;
+      /* Prevent horizontal scrollbar introduced by the gradient or any child overflow */
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Req 8.1, 8.2, 8.3, 8.4 — Task 2.2: Fallback centering layout
+       Mirrors the Tailwind classes on <main>:
+       flex flex-col items-center justify-center min-h-screen gap-4 p-4 */
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 1rem;    /* 16px — Req 8.4 minimum gap */
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+
+    /* Req 1.1: Minimum cat container size at all supported viewport widths */
+    #cat-container {
+      min-width: 200px;
+      min-height: 200px;
+    }
+
+    /* Req 6.2, 3.5: Glassmorphism container base fallback styles
+       Applied when Tailwind bg-white/30 backdrop-blur-lg etc. are unavailable */
+    #reaction-display,
+    #pet-counter {
+      background: rgba(255, 255, 255, 0.30);
+      border: 1px solid rgba(255, 255, 255, 0.40);
+      border-radius: 9999px;
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem; /* min 14px via inherited root font size */
+    }
+
+    /* Req 2.4, 2.5: Cat bounce animation — scale ≥ 1.15× in 300ms */
+    @keyframes cat-bounce-anim {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.18) translateY(-6px); }
+      70%  { transform: scale(1.08) translateY(-3px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+
+    .cat-bounce {
+      animation: cat-bounce-anim 300ms ease-out forwards;
+    }
+
+    /* Req 1.5: Cat fallback element hidden by default */
+    .cat-fallback {
+      display: none;
+      font-size: 8rem;
+      line-height: 1;
+      text-align: center;
+      min-width: 200px;
+      min-height: 200px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cat-fallback.visible {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+  <!--
+    Req 8.1, 8.2, 8.3, 8.4 — Task 2.2: <main> layout wrapper
+    Tailwind classes: flex flex-col items-center justify-center min-h-screen gap-4 p-4
+    Children are ordered top-to-bottom: Cat Container → Reaction Display → Pet Counter
+    (per Req 8.3 and design.md layout spec)
+  -->
+  <main class="flex flex-col items-center justify-center min-h-screen gap-4 p-4">
+
+    <!--
+      Req 1.1, 1.2, 1.3, 1.4, 1.5 — Task 3.1: Cat container
+      - aspect-square keeps the display area perfectly square (Req 1.3)
+      - cursor-pointer / select-none improve click UX
+      - min-width/min-height guarantee ≥ 200×200 px at all viewports (Req 1.1)
+      - filter: drop-shadow visually separates the cat from the background (Req 1.4)
+    -->
+    <div id="cat-container"
+         class="aspect-square cursor-pointer select-none flex items-center justify-center"
+         style="min-width: 200px; min-height: 200px; filter: drop-shadow(0 8px 24px rgba(233,150,180,0.45)) drop-shadow(0 2px 6px rgba(180,100,130,0.25));">
+      <!--
+        Req 1.2: Minimalist vector cat graphic
+        Req 1.5: onerror hides img and shows .cat-fallback emoji in same position/size
+      -->
+      <img id="cat-img"
+           src="cat.svg"
+           alt="A cute cat"
+           style="width: 100%; height: 100%; object-fit: contain;"
+           onerror="this.style.display='none'; document.querySelector('.cat-fallback').classList.add('visible');" />
+      <!-- Req 1.5: Emoji fallback — same position and size as img; hidden until onerror fires -->
+      <div class="cat-fallback" aria-label="A cute cat">🐱</div>
+    </div>
+
+    <!-- Req 3.4, 6.1, 6.2: Reaction Display — glassmorphism container, idle prompt on load -->
+    <div id="reaction-display"
+         class="bg-white/30 backdrop-blur-lg rounded-full border border-white/40 px-6 py-2 text-base font-semibold text-gray-700 text-center"
+         role="status"
+         aria-live="polite">
+      Pet me! 🐾
+    </div>
+
+    <!-- Req 4.1, 4.2, 4.5, 6.1, 6.2: Pet Counter — glassmorphism container, starts at 0 -->
+    <div id="pet-counter"
+         class="bg-white/30 backdrop-blur-lg rounded-full border border-white/40 px-6 py-2 text-base font-semibold text-gray-700">
+      Pets: <span id="counter-value">0</span>
+    </div>
+
+  </main>
+
+  <!-- Req 9.1, 9.3: app.js loaded at bottom of body — no framework dependencies -->
+  <script src="app.js"></script>
+</body>
+</html>
